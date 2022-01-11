@@ -1,10 +1,38 @@
 # opencv_playground
 
-You might be looking for the oil paint synthesizer.
+This is a fork of [ctmakro's oil paint synthesizer](https://github.com/ctmakro/opencv_playground) with OpenCV.
 
-![the flower](cover_newmodel.jpg)
+## TO DO:
 
-# painterfun.py
+- simplify input commands
+- allow for scale control of brushes (done)
+- allow for scale control of images
+- Allow for multi-resolution and configuration passes (eg. 5 passes at 50-200px with brush x, then 4 passes at 10-50px with brush y) - currently not working - probs need to review how canvas is being used
+
+![the flower](docs/img/cover_newmodel.jpg)
+
+# Installation
+
+In the terminal run 
+
+```
+pip install -r requirements.txt
+```
+
+
+# Running 
+
+edit the file `src/repaint_image.py`. At the bottom there is a path for the image to edit. Update it with your image.
+Next, to execute, simply run: 
+
+`python3 src/repaint_image.py' 
+
+
+
+--------
+Old notes I'm not yet ready to remove
+
+# painterfun.py (renamed to repaint_image.py)
 
 1. install Anaconda/Miniconda environment for Python 3 . <https://www.continuum.io/downloads#windows>
 2. install OpenCV for Python

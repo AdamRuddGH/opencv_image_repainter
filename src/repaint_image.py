@@ -1,6 +1,6 @@
 print('importing packages...')
 import numpy as np
-import cv2
+import cv2 #this is opencv-python
 import math
 import random
 import time
@@ -23,19 +23,29 @@ def lockgen(canvas,ym,yp,xm,xp):
     #     return rightcanvaslock:
     # if riding:
     #     reutrn canvaslock:
+    # This is clearly not important
     pass
-def load(filename='flower.jpg'):
+
+
+def load(filename='files_go_here/input/flower.jpg'):
+    """
+        Load an image for processing
+    """
+    
     print('loading',filename,'...')
-    global imname,flower,canvas,hist
-    global rescale,xs_small,ys_small,smallerflower
+
+    #Set globals
+    global input_image, smaller_input_image
+    global imname, canvas, hist
+    global rescale, xs_small, ys_small
 
     imname = filename.split('.')[0]
 
     # original image
-    flower = cv2.imread(filename)
+    input_image = cv2.imread(filename)
 
-    xshape = flower.shape[1]
-    yshape = flower.shape[0]
+    xshape = input_image.shape[1]
+    yshape = input_image.shape[0]
 
     rescale = xshape/640
     # display rescaling: you'll know when it's larger than your screen
@@ -45,15 +55,15 @@ def load(filename='flower.jpg'):
     xs_small = int(xshape/rescale)
     ys_small = int(yshape/rescale)
 
-    smallerflower = cv2.resize(flower,dsize=(xs_small,ys_small)).astype('float32')/255
+    smaller_input_image = cv2.resize(input_image,dsize=(xs_small,ys_small)).astype('float32')/255
     # for preview purpose,
     # if image too large
 
     # convert to float32
-    flower = flower.astype('float32')/255
+    input_image = input_image.astype('float32')/255
 
     # canvas initialized
-    canvas = flower.copy()
+    canvas = input_image.copy()
     canvas[:,:] = 0.8
 
     #clear hist
@@ -63,15 +73,21 @@ def load(filename='flower.jpg'):
 load()
 
 def rn():
+    """
+        Returns a random number
+    """
     return random.random()
 
 def showimg():
+    """
+        shows the image that has been processed in a canvass
+    """
     if rescale==1:
         smallercanvas = canvas
     else:
         smallercanvas = cv2.resize(canvas,dsize=(xs_small,ys_small),interpolation=cv2.INTER_NEAREST)
 
-    i,j,d = wherediff(smallercanvas,smallerflower)
+    i,j,d = wherediff(smallercanvas,smaller_input_image)
     sd = np.mean(d)
     print('mean diff:',sd)
 
@@ -79,17 +95,24 @@ def showimg():
     d[:,j]=1.0
 
     cv2.imshow('canvas',smallercanvas)
-    cv2.imshow('flower',smallerflower)
+    cv2.imshow('flower',smaller_input_image)
     cv2.imshow('diff',d)
 
     cv2.waitKey(1)
     cv2.waitKey(1)
 
 def destroy():
+    """
+        destroy openCV canvas windows
+    """
     cv2.destroyAllWindows()
 
-def positive_sharpen(i,overblur=False,coeff=8.): #no darken to original image
-    # emphasize the edges
+def positive_sharpen(i,overblur=False,coeff=8.): 
+    """
+        This function will attempt to sharpen, with the goal of:
+        - not darkening the original image
+        - emphasizing the edges
+    """
     blurred = cv2.blur(i,(5,5))
     sharpened = i + (i - blurred) * coeff
     if overblur:
@@ -97,7 +120,10 @@ def positive_sharpen(i,overblur=False,coeff=8.): #no darken to original image
     return cv2.blur(np.maximum(sharpened,i),(3,3))
 
 def diff(i1,i2,overblur=False):
-    #calculate the difference of 2 float32 BGR images.
+    """
+        calculate the difference of 2 float32 BGR images.
+        return the difference (d)
+    """
 
     # # use lab
     # i1=i1.astype(np.float32)
@@ -116,11 +142,14 @@ def diff(i1,i2,overblur=False):
     # grayscalize
 
 def wherediff(i1=None,i2=None):
-    global canvas,flower
+    """
+        calculate the location of the difference
+    """
+    global canvas,input_image
     if i1 is None:
         i1 = canvas
     if i2 is None:
-        i2 = flower
+        i2 = input_image
 
     # find out where max difference point is.
     d = diff(i1,i2,overblur=True)
@@ -129,6 +158,9 @@ def wherediff(i1=None,i2=None):
     return i,j,d
 
 def get_random_color():
+    """
+        Get a random colour as a float32 type
+    """
     return np.array([rn(),rn(),rn()]).astype('float32')
     #danger: default to float64
 
@@ -241,7 +273,7 @@ def paint_one(x,y,brushname='random',angle=-1.,minrad=10,maxrad=60):
     # set initial color
     # c = get_random_color()
     # sample color from image => converges faster.
-    c = flower[int(y),int(x),:]
+    c = input_image[int(y),int(x),:]
 
     delta = 1e-4
 
@@ -249,8 +281,8 @@ def paint_one(x,y,brushname='random',angle=-1.,minrad=10,maxrad=60):
     def get_roi(newx,newy,newrad):
         radius,srad = intrad(newrad)
 
-        xshape = flower.shape[1]
-        yshape = flower.shape[0]
+        xshape = input_image.shape[1]
+        yshape = input_image.shape[0]
 
 
         yp = int(min(newy+radius,yshape-1))
@@ -262,7 +294,7 @@ def paint_one(x,y,brushname='random',angle=-1.,minrad=10,maxrad=60):
             # if zero w or h
             raise NameError('zero roi')
 
-        ref = flower[ym:yp,xm:xp]
+        ref = input_image[ym:yp,xm:xp]
         bef = canvas[ym:yp,xm:xp]
         aftr = np.array(bef)
 
@@ -382,12 +414,12 @@ def putstrokes(howmany, minrad=10, maxrad=50,brushname='random'):  #this will er
 
         point_list = []
         y,x,d = wherediff()
-        phasemap = gradient.get_phase(flower)
+        phasemap = gradient.get_phase(input_image)
 
         # while not enough points:
         while len(point_list)<howmany:
             # randomly pick one point
-            yshape,xshape = flower.shape[0:2]
+            yshape,xshape = input_image.shape[0:2]
             ry,rx = int(rn()*yshape),int(rn()*xshape)
 
             # accept with high probability if error is large
@@ -431,9 +463,12 @@ printgrad = False
 # printgrad = True
 
 # run the whole thing
-def r(epoch=1,minsize=10,maxsize=50,brushname='random'):  #control the size per r
+def r(epoch=1,minsize=10,maxsize=50,brushname='random', numstrokes=512):  #control the size per r
+    """
+        TODO: make a better seed calculation
+    """
     # filename prefix for each run
-    seed = int(rn()*1000)
+    seed = int(rn()*1000)  
 
     print('running...')
     st = time.time()
@@ -444,7 +479,7 @@ def r(epoch=1,minsize=10,maxsize=50,brushname='random'):  #control the size per 
 
     for i in range(epoch):
         loopfor = 1
-        paranum = 256
+        paranum = numstrokes #512 #256
         # number of stroke tries per batch, sent to thread pool
         # smaller number decreases efficiency
 
@@ -490,3 +525,12 @@ def r(epoch=1,minsize=10,maxsize=50,brushname='random'):  #control the size per 
             showcounter=0
             showimg()
     showimg()
+
+
+#run the job
+load('files_go_here/input/cars_animegan_v2.jpg')
+r(epoch=10,minsize=100,maxsize=300,brushname='random', numstrokes=1000) #initial bg stuff
+# r(epoch=4,minsize=20,maxsize=50,brushname='random', numstrokes=1000)
+# r(epoch=4,minsize=5,maxsize=10,brushname='random', numstrokes=1000)
+# r(epoch=4,minsize=2,maxsize=5,brushname='random', numstrokes=1000)
+# repaint()

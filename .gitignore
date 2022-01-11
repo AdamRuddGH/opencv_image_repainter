@@ -1,6 +1,7 @@
 
 *.png
 *.jpg
+*.pyc
 
 !flower.jpg
 !readme.md
@@ -13,3 +14,6 @@
 !running.jpg
 
 !*.py
+
+#Mac thumbs
+*.DS_Store
